@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-label="通往同一颗 LSM6DSV16X 的两条路：带 MCU 的载板，以及由 SoC 直读的裸片。两条路产出相同的 12 字节块，由同一个 SflpDecoder 解成陀螺、重力与四元数。">
+  <title>通往同一颗 IMU 的两条路，接缝处只有一块数据</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .t   { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif; fill: #0f172a; }
+      .m   { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif; fill: #475569; }
+      .ttl { font-size: 22px; font-weight: 700; text-anchor: middle; }
+      .h   { font-size: 14px; font-weight: 700; text-anchor: middle; }
+      .b   { font-size: 13.5px; font-weight: 600; text-anchor: middle; }
+      .s   { font-size: 12px; text-anchor: middle; }
+      .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+      .seam{ font-size: 12.5px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <text class="t ttl" x="480" y="40">通往同一颗 IMU 的两条路 —— 以及接缝处的那一块</text>
+
+  <!-- ============ 路径 A ============ -->
+  <rect x="36" y="76" width="400" height="260" rx="12" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+  <text class="t h" x="236" y="100">路径 A —— 带 MCU 的载板</text>
+
+  <rect x="60" y="116" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="138">一条串行总线，与舵机共用</text>
+  <text class="m s" x="236" y="157">主机读一个寄存器（id 200）</text>
+
+  <line x1="236" y1="168" x2="236" y2="188" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="190" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="212">载板自己的 MCU</text>
+  <text class="m s" x="236" y="231">轮询芯片，把融合结果转发出去</text>
+
+  <line x1="236" y1="242" x2="236" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="264" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="286">LSM6DSV16X —— 片上 SFLP</text>
+  <text class="m s" x="236" y="305">把加速度计与陀螺融合成旋转矢量</text>
+
+  <!-- ============ 路径 B ============ -->
+  <rect x="524" y="76" width="400" height="260" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/>
+  <text class="t h" x="724" y="100">路径 B —— 裸片（本 crate）</text>
+
+  <rect x="548" y="116" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b mono" x="724" y="138">SoC 自己读 /dev/i2c-4</text>
+  <text class="m s" x="724" y="157">无 MCU，无第二条总线，无第二个处理器</text>
+
+  <line x1="724" y1="168" x2="724" y2="188" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="548" y="190" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="724" y="212">i2c4-M0 · 第 27 脚 SDA / 第 28 脚 SCL</text>
+  <text class="m s" x="724" y="231">每次寄存器写都是一条合并的 i2c_msg</text>
+
+  <line x1="724" y1="242" x2="724" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="548" y="264" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="724" y="286">裸片 LSM6DSV16X —— 片上 SFLP</text>
+  <text class="m s" x="724" y="305">0x6B（SA0 接 3.3 V）</text>
+
+  <!-- ============ 接缝 ============ -->
+  <line x1="236" y1="336" x2="236" y2="396" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="724" y1="336" x2="724" y2="396" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="180" y="400" width="600" height="96" rx="10" fill="#fef9c3" stroke="#fde047" stroke-width="1.6"/>
+  <text class="t b" x="480" y="424">接缝 —— 两条路产出的是同一份 12 字节</text>
+  <text class="t seam" x="480" y="448">字节 0..6     陀螺 x / y / z，i16 LE 原始计数（±500 dps）</text>
+  <text class="t seam" x="480" y="468">字节 6..12   SFLP 旋转矢量 x / y / z，IEEE half</text>
+  <text class="t seam" x="480" y="488">w = sqrt(1 - x*x - y*y - z*z) —— 无时间戳、无标志位、无来源</text>
+
+  <line x1="480" y1="496" x2="480" y2="518" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- ============ 解码器 ============ -->
+  <rect x="290" y="520" width="380" height="52" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b mono" x="480" y="542">SflpDecoder</text>
+  <text class="m s" x="480" y="561">安装旋转 · 中位数 3 去尖刺 · 保持上一个好姿态</text>
+
+  <line x1="480" y1="572" x2="480" y2="600" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- ============ 输出 ============ -->
+  <rect x="290" y="602" width="380" height="60" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text class="t b mono" x="480" y="626">ImuData { gyro, gravity, quat }</text>
+  <text class="m s" x="480" y="646">躯干坐标系 · 摔倒检测与策略看到的就是它</text>
+</svg>

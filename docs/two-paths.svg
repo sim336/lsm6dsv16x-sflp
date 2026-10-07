@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-label="Two paths to one LSM6DSV16X: an MCU carrier board, and the bare chip read directly by the SoC. Both produce the same 12-byte block, which one SflpDecoder turns into gyro, gravity and quaternion.">
+  <title>Two paths to one IMU, one block at the seam</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .t   { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #0f172a; }
+      .m   { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #475569; }
+      .ttl { font-size: 22px; font-weight: 700; text-anchor: middle; }
+      .h   { font-size: 14px; font-weight: 700; text-anchor: middle; }
+      .b   { font-size: 13.5px; font-weight: 600; text-anchor: middle; }
+      .s   { font-size: 12px; text-anchor: middle; }
+      .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+      .seam{ font-size: 12.5px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <text class="t ttl" x="480" y="40">Two paths to one IMU — and one block at the seam</text>
+
+  <!-- ============ path A ============ -->
+  <rect x="36" y="76" width="400" height="260" rx="12" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+  <text class="t h" x="236" y="100">path A — an MCU carrier board</text>
+
+  <rect x="60" y="116" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="138">a serial bus, shared with the servos</text>
+  <text class="m s" x="236" y="157">the host reads one register (id 200)</text>
+
+  <line x1="236" y1="168" x2="236" y2="188" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="190" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="212">the carrier board's own MCU</text>
+  <text class="m s" x="236" y="231">polls the chip, republishes the fused word</text>
+
+  <line x1="236" y1="242" x2="236" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="264" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="236" y="286">LSM6DSV16X — SFLP on-die</text>
+  <text class="m s" x="236" y="305">fuses accel + gyro into a rotation vector</text>
+
+  <!-- ============ path B ============ -->
+  <rect x="524" y="76" width="400" height="260" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/>
+  <text class="t h" x="724" y="100">path B — the bare chip (this crate)</text>
+
+  <rect x="548" y="116" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="724" y="138">the SoC, reading /dev/i2c-4 itself</text>
+  <text class="m s" x="724" y="157">no MCU, no second bus, no second processor</text>
+
+  <line x1="724" y1="168" x2="724" y2="188" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="548" y="190" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b mono" x="724" y="212">i2c4-M0 · pin 27 SDA / pin 28 SCL</text>
+  <text class="m s" x="724" y="231">one joined i2c_msg per register write</text>
+
+  <line x1="724" y1="242" x2="724" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="548" y="264" width="352" height="52" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="724" y="286">bare LSM6DSV16X — SFLP on-die</text>
+  <text class="m s mono" x="724" y="305">0x6B, SA0 strapped to 3.3 V</text>
+
+  <!-- ============ the seam ============ -->
+  <line x1="236" y1="336" x2="236" y2="396" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="724" y1="336" x2="724" y2="396" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <rect x="180" y="400" width="600" height="96" rx="10" fill="#fef9c3" stroke="#fde047" stroke-width="1.6"/>
+  <text class="t b" x="480" y="424">the seam — the same 12 bytes from either path</text>
+  <text class="t seam mono" x="480" y="448">bytes 0..6   gyro x / y / z, i16 LE raw counts (±500 dps)</text>
+  <text class="t seam mono" x="480" y="468">bytes 6..12  SFLP game-rotation x / y / z, IEEE half</text>
+  <text class="t seam mono" x="480" y="488">w = sqrt(1 - x*x - y*y - z*z) — no timestamp, no flag, no origin</text>
+
+  <line x1="480" y1="496" x2="480" y2="518" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- ============ decoder ============ -->
+  <rect x="290" y="520" width="380" height="52" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="t b" x="480" y="542">SflpDecoder</text>
+  <text class="m s" x="480" y="561">mount rotation · median-3 spikes · hold last good</text>
+
+  <line x1="480" y1="572" x2="480" y2="600" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- ============ output ============ -->
+  <rect x="290" y="602" width="380" height="60" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text class="t b mono" x="480" y="626">ImuData { gyro, gravity, quat }</text>
+  <text class="m s" x="480" y="646">trunk frame · what fall detection and the policy see</text>
+</svg>

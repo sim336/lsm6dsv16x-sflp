@@ -1,0 +1,50 @@
+# A bare LSM6DSV16X read over I²C, assembled into the 12-byte block an `imu_to_dxl` v2 board
+# serves on the Dynamixel bus.
+#
+# The chip's SFLP block fuses the accelerometer and the gyroscope on-die and emits a
+# game-rotation vector. This crate reads the raw gyroscope and the fused quaternion, packs them
+# into the same 12 bytes, and hands them to `SflpDecoder` — which is also in this crate, so the
+# whole path from a register read to a gravity vector is available without an application
+# framework around it.
+#
+# The crate is deliberately `std`: the point of this path is that a Linux SoC reads the chip
+# directly off `/dev/i2c-*`, and there is no `no_std` target in that picture. The driver core
+# (`BodyImu<P: I2c>`) is generic over `embedded-hal` and has no platform dependency at all; only
+# the `BoardBodyImu` alias and the bench binary need Linux.
+[package]
+name = "lsm6dsv16x-sflp"
+version = "0.1.0"
+edition = "2024"
+# `slice::as_chunks`, which the FIFO drain uses. Edition 2024 needs 1.85; this is the real floor.
+rust-version = "1.88"
+license = "Apache-2.0"
+description = "A bare LSM6DSV16X on I²C, assembled into the 12-byte SFLP block an imu_to_dxl v2 board serves"
+readme = "README.md"
+keywords = ["lsm6dsv16x", "imu", "i2c", "sflp", "embedded-hal"]
+categories = ["hardware-support"]
+# Set this once the repository exists — crates.io links it from the package page.
+repository = "https://github.com/sim336/lsm6dsv16x-sflp"
+
+[dependencies]
+# The bus the register layer is generic over. Nothing on crates.io writes this chip's registers:
+# `lsm6dsv16x-rs` is the crate to reach for and every release of it depends on a `bisync` release
+# that is yanked, so it cannot be resolved. The map is in `src/lib.rs`, transcribed from the
+# datasheet with the sequences cross-checked against a working reference on real hardware.
+embedded-hal = "1.0"
+thiserror = "2"
+
+# The bench binary only. Cargo has no way to give one bin a dependency and not the library, so
+# these are ordinary dependencies; both are small and `clap` is a build-time cost, not a runtime
+# one for anyone using the library.
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+
+# `/dev/i2c-*`, which exists on no other platform. Off Linux the crate still builds, every test
+# still runs, and only the `BoardBodyImu` alias and the bench binary are missing — so a developer
+# can iterate on the register map and the decoder on a laptop.
+[target.'cfg(target_os = "linux")'.dependencies]
+linux-embedded-hal = "0.4"
+
+[[bin]]
+name = "bench_imu"
+path = "src/bin/bench_imu.rs"

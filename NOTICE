@@ -1,0 +1,70 @@
+lsm6dsv16x-sflp
+Copyright 2026 the lsm6dsv16x-sflp authors
+
+This product includes software developed as part of
+pollen-robotics/microduck (https://github.com/pollen-robotics/microduck),
+Copyright 2024-2026 Pollen Robotics, licensed under the Apache License 2.0.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+these files except in compliance with the License. You may obtain a copy of the
+License in the LICENSE file, or at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+--------------------------------------------------------------------------------
+Derived files
+--------------------------------------------------------------------------------
+
+The following files were taken from pollen-robotics/microduck and modified for
+this standalone crate. Each is marked in its own header as well.
+
+  src/sflp.rs
+    Derived from microduck's duck-control/src/imu.rs (SflpDecoder, ImuData,
+    half-precision decoding, the quaternion helpers and the median filter).
+    Changes: the crate-internal `model::NUM_JOINTS` compile-time assertion was
+    dropped, `V2_BOARD_MOUNT` was named from `SflpDecoder::DEFAULT_MOUNT`, and
+    the doc comments were rewritten to stand on their own.
+
+  src/stale.rs
+    Derived from microduck's duck-control/src/bus.rs (StaleImuTracker) and
+    duck-control/src/io.rs (ImuStale). Changes: moved into its own module and
+    documented without reference to the Dynamixel bus.
+
+  src/lib.rs
+    Derived from microduck's body-imu/src/lib.rs. Changes: the dependency on the
+    duck-control crate was removed — the block length and the decoder now come
+    from src/sflp.rs — and the `BodyImuIo` integration layer (which needs the
+    robot daemon's `RobotIo` trait and the Dynamixel bus) was left behind. The
+    register map, the bring-up sequence, `assemble_block`, `MOUNT` and every test
+    are the ones developed there.
+
+  src/bin/bench_imu.rs
+    Derived from microduck's body-imu/src/bin/bench_body_imu.rs. Changes renamed
+    the binary and moved the decoder import into this crate.
+
+  tools/*.py
+    Written during the bring-up work in that repository; the files are otherwise
+    unchanged apart from having their comments translated to English.
+
+--------------------------------------------------------------------------------
+Not included
+--------------------------------------------------------------------------------
+
+The STMicroelectronics reference driver `imu2uart/Core/Src/lsm6dsv16x.c` from
+that repository was NOT copied here, in whole or in part. Its copyright
+ownership is undetermined — the repository root declares it Apache-2.0 while the
+file header carries a copyright notice — and nothing in this crate needs it: the
+register map and the bring-up sequences in src/lib.rs were written from the
+datasheet and are pinned by this crate's own tests. Where this crate's behaviour
+differs from that reference driver deliberately (the gyroscope full scale, the
+SFLP output-data-rate field, the filters), the difference is called out in
+src/lib.rs and in docs/design.md.
+
+The mounting calibration in `MOUNT` and the measured numbers quoted in the
+documentation were measured on the authors' hardware, independently of that
+repository.

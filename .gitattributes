@@ -1,0 +1,10 @@
+# Everything is stored and checked out with LF, on every platform.
+#
+# The Rust sources, the Python tools and the shell snippets in the docs are meant to be
+# byte-identical wherever this is cloned. Git for Windows defaults to a CRLF checkout, which
+# changes what a diff looks like and what a script sees for no benefit — nothing here is
+# built by a Windows toolchain.
+* text=auto eol=lf
+
+# Binary or binary-adjacent: never normalised.
+*.png binary
